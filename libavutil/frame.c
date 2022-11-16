@@ -805,16 +805,17 @@ void av_frame_remove_side_data(AVFrame *frame, enum AVFrameSideDataType type)
 const char *av_frame_side_data_name(enum AVFrameSideDataType type)
 {
     switch(type) {
-    case AV_FRAME_DATA_PANSCAN:         return "AVPanScan";
-    case AV_FRAME_DATA_A53_CC:          return "ATSC A53 Part 4 Closed Captions";
-    case AV_FRAME_DATA_STEREO3D:        return "Stereo 3D";
-    case AV_FRAME_DATA_MATRIXENCODING:  return "AVMatrixEncoding";
-    case AV_FRAME_DATA_DOWNMIX_INFO:    return "Metadata relevant to a downmix procedure";
-    case AV_FRAME_DATA_REPLAYGAIN:      return "AVReplayGain";
-    case AV_FRAME_DATA_DISPLAYMATRIX:   return "3x3 displaymatrix";
-    case AV_FRAME_DATA_AFD:             return "Active format description";
-    case AV_FRAME_DATA_MOTION_VECTORS:  return "Motion vectors";
-    case AV_FRAME_DATA_SKIP_SAMPLES:    return "Skip samples";
+    case AV_FRAME_DATA_PANSCAN:           return "AVPanScan";
+    case AV_FRAME_DATA_A53_CC:            return "ATSC A53 Part 4 Closed Captions";
+    case AV_FRAME_DATA_STEREO3D:          return "Stereo 3D";
+    case AV_FRAME_DATA_MATRIXENCODING:    return "AVMatrixEncoding";
+    case AV_FRAME_DATA_DOWNMIX_INFO:      return "Metadata relevant to a downmix procedure";
+    case AV_FRAME_DATA_REPLAYGAIN:        return "AVReplayGain";
+    case AV_FRAME_DATA_DISPLAYMATRIX:     return "3x3 displaymatrix";
+    case AV_FRAME_DATA_AFD:               return "Active format description";
+    case AV_FRAME_DATA_MOTION_VECTORS:    return "Motion vectors";
+    case AV_FRAME_DATA_REFERENCE_INDICES: return "Reference indices";
+    case AV_FRAME_DATA_SKIP_SAMPLES:      return "Skip samples";
     case AV_FRAME_DATA_AUDIO_SERVICE_TYPE:          return "Audio service type";
     case AV_FRAME_DATA_MASTERING_DISPLAY_METADATA:  return "Mastering display metadata";
     case AV_FRAME_DATA_CONTENT_LIGHT_LEVEL:         return "Content light level metadata";

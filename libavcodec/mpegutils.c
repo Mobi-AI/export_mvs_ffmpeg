@@ -24,6 +24,7 @@
 #include "libavutil/frame.h"
 #include "libavutil/pixdesc.h"
 #include "libavutil/motion_vector.h"
+#include "libavutil/reference_index.h"
 #include "libavutil/avassert.h"
 
 #include "avcodec.h"
@@ -46,6 +47,12 @@ static int add_mb(AVMotionVector *mb, uint32_t mb_type,
     mb->source = direction ? 1 : -1;
     mb->flags = 0; // XXX: does mb_type contain extra information that could be exported here?
     return 1;
+}
+
+static void add_mb_ref(AVReferenceIndex *mb, uint8_t ref)
+{
+    mb->ref = 0;
+    return;
 }
 
 void ff_draw_horiz_band(AVCodecContext *avctx,
@@ -156,7 +163,7 @@ static char get_interlacement_char(int mb_type)
 
 void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
                           const uint8_t *mbskip_table, const uint32_t *mbtype_table,
-                          const int8_t *qscale_table, int16_t (*const motion_val[2])[2],
+                          const int8_t *qscale_table, int16_t (*const motion_val[2])[2], int8_t *ref_index[2],
                           int mb_width, int mb_height, int mb_stride, int quarter_sample)
 {
     if ((avctx->export_side_data & AV_CODEC_EXPORT_DATA_MVS) && mbtype_table && motion_val[0]) {
@@ -171,6 +178,9 @@ void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
          * for the maximum number of MB (4 MB in case of IS_8x8) */
         AVMotionVector *mvs = av_malloc_array(mb_width * mb_height, 2 * 4 * sizeof(AVMotionVector));
         if (!mvs)
+            return;
+        AVReferenceIndex *indices = av_malloc_array(mb_width * mb_height, 2 * 4 * sizeof(AVReferenceIndex));
+        if (!indices)
             return;
 
         for (mb_y = 0; mb_y < mb_height; mb_y++) {
@@ -187,7 +197,9 @@ void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
                                       (mb_y * 2 + (i >> 1)) * mv_stride) << (mv_sample_log2 - 1);
                             int mx = motion_val[direction][xy][0];
                             int my = motion_val[direction][xy][1];
+                            uint8_t ref = ref_index[direction][xy]; // TODO?
                             mbcount += add_mb(mvs + mbcount, mb_type, sx, sy, mx, my, scale, direction);
+                            add_mb_ref(indices+mbcount, ref);
                         }
                     } else if (IS_16X8(mb_type)) {
                         for (i = 0; i < 2; i++) {
@@ -196,11 +208,13 @@ void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
                             int xy = (mb_x * 2 + (mb_y * 2 + i) * mv_stride) << (mv_sample_log2 - 1);
                             int mx = motion_val[direction][xy][0];
                             int my = motion_val[direction][xy][1];
+                            uint8_t ref = ref_index[direction][xy]; // TODO?
 
                             if (IS_INTERLACED(mb_type))
                                 my *= 2;
 
                             mbcount += add_mb(mvs + mbcount, mb_type, sx, sy, mx, my, scale, direction);
+                            add_mb_ref(indices+mbcount, ref);
                         }
                     } else if (IS_8X16(mb_type)) {
                         for (i = 0; i < 2; i++) {
@@ -209,11 +223,13 @@ void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
                             int xy = (mb_x * 2 + i + mb_y * 2 * mv_stride) << (mv_sample_log2 - 1);
                             int mx = motion_val[direction][xy][0];
                             int my = motion_val[direction][xy][1];
+                            uint8_t ref = ref_index[direction][xy]; // TODO?
 
                             if (IS_INTERLACED(mb_type))
                                 my *= 2;
 
                             mbcount += add_mb(mvs + mbcount, mb_type, sx, sy, mx, my, scale, direction);
+                            add_mb_ref(indices+mbcount, ref);
                         }
                     } else {
                           int sx = mb_x * 16 + 8;
@@ -221,14 +237,16 @@ void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
                           int xy = (mb_x + mb_y * mv_stride) << mv_sample_log2;
                           int mx = motion_val[direction][xy][0];
                           int my = motion_val[direction][xy][1];
+                          uint8_t ref = ref_index[direction][xy]; // TODO?
                           mbcount += add_mb(mvs + mbcount, mb_type, sx, sy, mx, my, scale, direction);
+                          add_mb_ref(indices+mbcount, ref);
                     }
                 }
             }
         }
 
         if (mbcount) {
-            AVFrameSideData *sd;
+            AVFrameSideData *sd, *sd2;
 
             av_log(avctx, AV_LOG_DEBUG, "Adding %d MVs info to frame %d\n", mbcount, avctx->frame_number);
             sd = av_frame_new_side_data(pict, AV_FRAME_DATA_MOTION_VECTORS, mbcount * sizeof(AVMotionVector));
@@ -237,9 +255,17 @@ void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
                 return;
             }
             memcpy(sd->data, mvs, mbcount * sizeof(AVMotionVector));
+
+            sd2 = av_frame_new_side_data(pict, AV_FRAME_DATA_REFERENCE_INDICES, mbcount * sizeof(AVReferenceIndex));
+            if (!sd2) {
+                av_freep(&indices);
+                return;
+            }
+            memcpy(sd2->data, indices, mbcount * sizeof(AVReferenceIndex));
         }
 
         av_freep(&mvs);
+        av_freep(&indices);
     }
 
     /* TODO: export all the following to make them accessible for users (and filters) */

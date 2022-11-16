@@ -136,7 +136,7 @@ void ff_draw_horiz_band(AVCodecContext *avctx, const AVFrame *cur, const AVFrame
  */
 void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
                           const uint8_t *mbskip_table, const uint32_t *mbtype_table,
-                          const int8_t *qscale_table, int16_t (*const motion_val[2])[2],
+                          const int8_t *qscale_table, int16_t (*const motion_val[2])[2], int8_t *ref_index[2],
                           int mb_width, int mb_height, int mb_stride, int quarter_sample);
 
 #endif /* AVCODEC_MPEGUTILS_H */

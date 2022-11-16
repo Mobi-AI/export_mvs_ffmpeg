@@ -495,7 +495,7 @@ void ff_mpv_frame_end(MpegEncContext *s)
 void ff_print_debug_info(const MpegEncContext *s, const Picture *p, AVFrame *pict)
 {
     ff_print_debug_info2(s->avctx, pict, s->mbskip_table, p->mb_type,
-                         p->qscale_table, p->motion_val,
+                         p->qscale_table, p->motion_val, p->ref_index,
                          s->mb_width, s->mb_height, s->mb_stride, s->quarter_sample);
 }
 

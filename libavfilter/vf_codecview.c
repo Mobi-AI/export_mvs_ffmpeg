@@ -31,6 +31,7 @@
 
 #include "libavutil/imgutils.h"
 #include "libavutil/motion_vector.h"
+#include "libavutil/reference_index.h"
 #include "libavutil/opt.h"
 #include "libavutil/video_enc_params.h"
 #include "avfilter.h"
@@ -277,17 +278,21 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *frame)
 
     if (s->mv || s->mv_type) {
         AVFrameSideData *sd = av_frame_get_side_data(frame, AV_FRAME_DATA_MOTION_VECTORS);
-        if (sd) {
+        AVFrameSideData *sd2 = av_frame_get_side_data(frame, AV_FRAME_DATA_REFERENCE_INDICES);
+        if (sd && sd2) {
             int i;
             const AVMotionVector *mvs = (const AVMotionVector *)sd->data;
+            const AVReferenceIndex *indices = (const AVReferenceIndex *)sd2->data;
             const int is_iframe = (s->frame_type & FRAME_TYPE_I) && frame->pict_type == AV_PICTURE_TYPE_I;
             const int is_pframe = (s->frame_type & FRAME_TYPE_P) && frame->pict_type == AV_PICTURE_TYPE_P;
             const int is_bframe = (s->frame_type & FRAME_TYPE_B) && frame->pict_type == AV_PICTURE_TYPE_B;
 
             for (i = 0; i < sd->size / sizeof(*mvs); i++) {
                 const AVMotionVector *mv = &mvs[i];
+                const AVReferenceIndex *index = &indices[i];
                 const int direction = mv->source > 0;
-
+                av_log_set_level(AV_LOG_DEBUG);
+                av_log(ctx, AV_LOG_DEBUG, "reference index=%d", index->ref);
                 if (s->mv_type) {
                     const int is_fp = direction == 0 && (s->mv_type & MV_TYPE_FOR);
                     const int is_bp = direction == 1 && (s->mv_type & MV_TYPE_BACK);

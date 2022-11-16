@@ -60,6 +60,7 @@ static const AVOption filt_name##_options[] = { \
     {   "DISPLAYMATRIX",              "", 0,             AV_OPT_TYPE_CONST,  {.i64 = AV_FRAME_DATA_DISPLAYMATRIX              }, 0, 0, FLAGS, "type" }, \
     {   "AFD",                        "", 0,             AV_OPT_TYPE_CONST,  {.i64 = AV_FRAME_DATA_AFD                        }, 0, 0, FLAGS, "type" }, \
     {   "MOTION_VECTORS",             "", 0,             AV_OPT_TYPE_CONST,  {.i64 = AV_FRAME_DATA_MOTION_VECTORS             }, 0, 0, FLAGS, "type" }, \
+    {   "REFERENCE_INDICES",          "", 0,             AV_OPT_TYPE_CONST,  {.i64 = AV_FRAME_DATA_REFERENCE_INDICES          }, 0, 0, FLAGS, "type" }, \
     {   "SKIP_SAMPLES",               "", 0,             AV_OPT_TYPE_CONST,  {.i64 = AV_FRAME_DATA_SKIP_SAMPLES               }, 0, 0, FLAGS, "type" }, \
     {   "AUDIO_SERVICE_TYPE",         "", 0,             AV_OPT_TYPE_CONST,  {.i64 = AV_FRAME_DATA_AUDIO_SERVICE_TYPE         }, 0, 0, FLAGS, "type" }, \
     {   "MASTERING_DISPLAY_METADATA", "", 0,             AV_OPT_TYPE_CONST,  {.i64 = AV_FRAME_DATA_MASTERING_DISPLAY_METADATA }, 0, 0, FLAGS, "type" }, \

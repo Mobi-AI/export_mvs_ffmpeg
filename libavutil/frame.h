@@ -96,6 +96,13 @@ enum AVFrameSideDataType {
      */
     AV_FRAME_DATA_MOTION_VECTORS,
     /**
+     * Reference indices exported by some codecs (on demand through the export_mvs
+     * flag set in the libavcodec AVCodecContext flags option).
+     * The data is the AVReferenceIndex struct defined in
+     * libavutil/reference_index.h.
+     */
+    AV_FRAME_DATA_REFERENCE_INDICES,
+    /**
      * Recommmends skipping the specified number of samples. This is exported
      * only if the "skip_manual" AVOption is set in libavcodec.
      * This has the same format as AV_PKT_DATA_SKIP_SAMPLES.
