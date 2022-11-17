@@ -292,7 +292,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *frame)
                 const AVReferenceIndex *index = &indices[i];
                 const int direction = mv->source > 0;
                 av_log_set_level(AV_LOG_DEBUG);
-                av_log(ctx, AV_LOG_DEBUG, "reference index=%d", index->ref);
+                av_log(ctx, AV_LOG_DEBUG, "reference poc=%d", index->poc);
                 if (s->mv_type) {
                     const int is_fp = direction == 0 && (s->mv_type & MV_TYPE_FOR);
                     const int is_bp = direction == 1 && (s->mv_type & MV_TYPE_BACK);

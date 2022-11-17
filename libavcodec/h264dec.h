@@ -124,6 +124,7 @@ typedef struct H264Picture {
 
     AVBufferRef *ref_index_buf[2];
     int8_t *ref_index[2];
+    int *ref_pocs[2];
 
     int field_poc[2];       ///< top/bottom POC
     int poc;                ///< frame POC
@@ -737,6 +738,12 @@ static av_always_inline void write_back_motion_list(const H264Context *h,
         ref_index[1 + 0 * 2] = ref_cache[scan8[4]];
         ref_index[0 + 1 * 2] = ref_cache[scan8[8]];
         ref_index[1 + 1 * 2] = ref_cache[scan8[12]];
+        // store pocs:
+        int *ref_pocs = &h->cur_pic.ref_pocs[list][b8_xy];
+        ref_pocs[0 + 0 * 2] = sl->ref_list[list][ref_index[0 + 0 * 2]].parent->frame_num;
+        ref_pocs[1 + 0 * 2] = sl->ref_list[list][ref_index[1 + 0 * 2]].parent->frame_num;
+        ref_pocs[0 + 1 * 2] = sl->ref_list[list][ref_index[0 + 1 * 2]].parent->frame_num;
+        ref_pocs[1 + 1 * 2] = sl->ref_list[list][ref_index[1 + 1 * 2]].parent->frame_num;
     }
 }
 

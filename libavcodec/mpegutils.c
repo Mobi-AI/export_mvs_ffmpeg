@@ -49,9 +49,10 @@ static int add_mb(AVMotionVector *mb, uint32_t mb_type,
     return 1;
 }
 
-static void add_mb_ref(AVReferenceIndex *mb, uint8_t ref)
+static void add_mb_ref(AVReferenceIndex *mb, uint8_t ref_index, int ref_poc)
 {
-    mb->ref = 0;
+    mb->ref = ref_index;
+    mb->poc = ref_poc;
     return;
 }
 
@@ -163,7 +164,8 @@ static char get_interlacement_char(int mb_type)
 
 void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
                           const uint8_t *mbskip_table, const uint32_t *mbtype_table,
-                          const int8_t *qscale_table, int16_t (*const motion_val[2])[2], int8_t *ref_index[2],
+                          const int8_t *qscale_table, int16_t (*const motion_val[2])[2], 
+                          int8_t *ref_index[2], int *ref_pocs[2],
                           int mb_width, int mb_height, int mb_stride, int quarter_sample)
 {
     if ((avctx->export_side_data & AV_CODEC_EXPORT_DATA_MVS) && mbtype_table && motion_val[0]) {
@@ -197,9 +199,14 @@ void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
                                       (mb_y * 2 + (i >> 1)) * mv_stride) << (mv_sample_log2 - 1);
                             int mx = motion_val[direction][xy][0];
                             int my = motion_val[direction][xy][1];
-                            uint8_t ref = ref_index[direction][xy]; // TODO?
                             mbcount += add_mb(mvs + mbcount, mb_type, sx, sy, mx, my, scale, direction);
-                            add_mb_ref(indices+mbcount, ref);
+
+                            if (avctx->codec_id == AV_CODEC_ID_H264 && ref_pocs != NULL) {
+                                int xy = 4 * (mb_x + mb_y * mb_width) + i;
+                                uint8_t index = ref_index[direction][xy];
+                                int frame_num = ref_pocs[direction][xy];
+                                add_mb_ref(indices+mbcount, index, frame_num);
+                            }
                         }
                     } else if (IS_16X8(mb_type)) {
                         for (i = 0; i < 2; i++) {
@@ -208,13 +215,18 @@ void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
                             int xy = (mb_x * 2 + (mb_y * 2 + i) * mv_stride) << (mv_sample_log2 - 1);
                             int mx = motion_val[direction][xy][0];
                             int my = motion_val[direction][xy][1];
-                            uint8_t ref = ref_index[direction][xy]; // TODO?
 
                             if (IS_INTERLACED(mb_type))
                                 my *= 2;
 
                             mbcount += add_mb(mvs + mbcount, mb_type, sx, sy, mx, my, scale, direction);
-                            add_mb_ref(indices+mbcount, ref);
+
+                            if (avctx->codec_id == AV_CODEC_ID_H264 && ref_pocs != NULL) {
+                                int xy = 4 * (mb_x + mb_y * mb_width) + i==0?0:3;
+                                uint8_t index = ref_index[direction][xy];
+                                int frame_num = ref_pocs[direction][xy];
+                                add_mb_ref(indices+mbcount, index, frame_num);
+                            }
                         }
                     } else if (IS_8X16(mb_type)) {
                         for (i = 0; i < 2; i++) {
@@ -223,13 +235,18 @@ void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
                             int xy = (mb_x * 2 + i + mb_y * 2 * mv_stride) << (mv_sample_log2 - 1);
                             int mx = motion_val[direction][xy][0];
                             int my = motion_val[direction][xy][1];
-                            uint8_t ref = ref_index[direction][xy]; // TODO?
 
                             if (IS_INTERLACED(mb_type))
                                 my *= 2;
 
                             mbcount += add_mb(mvs + mbcount, mb_type, sx, sy, mx, my, scale, direction);
-                            add_mb_ref(indices+mbcount, ref);
+
+                            if (avctx->codec_id == AV_CODEC_ID_H264 && ref_pocs != NULL) {
+                                int xy = 4 * (mb_x + mb_y * mb_width) + i==0?0:3;
+                                uint8_t index = ref_index[direction][xy];
+                                int frame_num = ref_pocs[direction][xy];
+                                add_mb_ref(indices+mbcount, index, frame_num);
+                            }
                         }
                     } else {
                           int sx = mb_x * 16 + 8;
@@ -237,9 +254,13 @@ void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
                           int xy = (mb_x + mb_y * mv_stride) << mv_sample_log2;
                           int mx = motion_val[direction][xy][0];
                           int my = motion_val[direction][xy][1];
-                          uint8_t ref = ref_index[direction][xy]; // TODO?
                           mbcount += add_mb(mvs + mbcount, mb_type, sx, sy, mx, my, scale, direction);
-                          add_mb_ref(indices+mbcount, ref);
+                          if (avctx->codec_id == AV_CODEC_ID_H264 && ref_pocs != NULL) {
+                            int xy = 4 * (mb_x + mb_y * mb_width);
+                            uint8_t index = ref_index[direction][xy];
+                            int frame_num = ref_pocs[direction][xy];
+                            add_mb_ref(indices+mbcount, index, frame_num);
+                          }
                     }
                 }
             }

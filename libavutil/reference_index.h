@@ -23,6 +23,7 @@
 
 typedef struct AVReferenceIndex {
     int8_t ref;
+    int poc; // display order
 } AVReferenceIndex;
 
 #endif /* AVUTIL_REFERENCE_INDEX_H */
