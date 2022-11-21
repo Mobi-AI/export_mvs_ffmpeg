@@ -44,6 +44,7 @@ static void av_noinline free_picture_tables(Picture *pic)
     for (int i = 0; i < 2; i++) {
         av_buffer_unref(&pic->motion_val_buf[i]);
         av_buffer_unref(&pic->ref_index_buf[i]);
+        av_buffer_unref(&pic->ref_pocs_buf[i]);
     }
 }
 
@@ -78,6 +79,7 @@ do {\
         for (int i = 0; i < 2; i++) {
             MAKE_WRITABLE(motion_val_buf[i]);
             MAKE_WRITABLE(ref_index_buf[i]);
+            MAKE_WRITABLE(ref_pocs_buf[i]);
         }
     }
 
@@ -235,7 +237,8 @@ static int alloc_picture_tables(AVCodecContext *avctx, Picture *pic, int encodin
         for (i = 0; mv_size && i < 2; i++) {
             pic->motion_val_buf[i] = av_buffer_allocz(mv_size);
             pic->ref_index_buf[i]  = av_buffer_allocz(ref_index_size);
-            if (!pic->motion_val_buf[i] || !pic->ref_index_buf[i])
+            pic->ref_pocs_buf[i]  = av_buffer_allocz(4*ref_index_size);
+            if (!pic->motion_val_buf[i] || !pic->ref_index_buf[i] || !pic->ref_pocs_buf[i])
                 return AVERROR(ENOMEM);
         }
     }
@@ -294,6 +297,7 @@ int ff_alloc_picture(AVCodecContext *avctx, Picture *pic, MotionEstContext *me,
         for (i = 0; i < 2; i++) {
             pic->motion_val[i] = (int16_t (*)[2])pic->motion_val_buf[i]->data + 4;
             pic->ref_index[i]  = pic->ref_index_buf[i]->data;
+            pic->ref_pocs[i]   = pic->ref_pocs_buf[i]->data;
         }
     }
 
@@ -344,6 +348,7 @@ int ff_update_picture_tables(Picture *dst, const Picture *src)
     for (i = 0; i < 2; i++) {
         ret |= av_buffer_replace(&dst->motion_val_buf[i], src->motion_val_buf[i]);
         ret |= av_buffer_replace(&dst->ref_index_buf[i],  src->ref_index_buf[i]);
+        ret |= av_buffer_replace(&dst->ref_pocs_buf[i],  src->ref_pocs_buf[i]);
     }
 
     if (ret < 0) {

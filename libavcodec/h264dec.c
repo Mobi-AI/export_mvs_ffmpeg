@@ -153,6 +153,7 @@ void ff_h264_free_tables(H264Context *h)
     av_buffer_pool_uninit(&h->mb_type_pool);
     av_buffer_pool_uninit(&h->motion_val_pool);
     av_buffer_pool_uninit(&h->ref_index_pool);
+    av_buffer_pool_uninit(&h->ref_pocs_pool);
 
 #if CONFIG_ERROR_RESILIENCE
     av_freep(&h->er.mb_index2xy);
@@ -940,7 +941,7 @@ static int finalize_frame(H264Context *h, AVFrame *dst, H264Picture *out, int *g
                                  out->motion_val,
                                  out->ref_index,
                                  out->ref_pocs,
-                                 out->mb_width, out->mb_height, out->mb_stride, 1);
+                                 out->mb_width, out->mb_height, out->mb_stride, 1, out->poc);
         }
     }
 

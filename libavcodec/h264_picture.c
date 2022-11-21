@@ -51,6 +51,7 @@ void ff_h264_unref_picture(H264Context *h, H264Picture *pic)
     for (i = 0; i < 2; i++) {
         av_buffer_unref(&pic->motion_val_buf[i]);
         av_buffer_unref(&pic->ref_index_buf[i]);
+        av_buffer_unref(&pic->ref_pocs_buf[i]);
     }
 
     memset((uint8_t*)pic + off, 0, sizeof(*pic) - off);
@@ -65,6 +66,7 @@ static void h264_copy_picture_params(H264Picture *dst, const H264Picture *src)
     for (int i = 0; i < 2; i++) {
         dst->motion_val[i] = src->motion_val[i];
         dst->ref_index[i]  = src->ref_index[i];
+        dst->ref_pocs[i]   = src->ref_pocs[i];
     }
 
     for (int i = 0; i < 2; i++)
@@ -119,7 +121,8 @@ int ff_h264_ref_picture(H264Context *h, H264Picture *dst, H264Picture *src)
     for (i = 0; i < 2; i++) {
         dst->motion_val_buf[i] = av_buffer_ref(src->motion_val_buf[i]);
         dst->ref_index_buf[i]  = av_buffer_ref(src->ref_index_buf[i]);
-        if (!dst->motion_val_buf[i] || !dst->ref_index_buf[i]) {
+        dst->ref_pocs_buf[i] = av_buffer_ref(src->ref_pocs_buf[i]);
+        if (!dst->motion_val_buf[i] || !dst->ref_index_buf[i] || !dst->ref_pocs_buf[i]) {
             ret = AVERROR(ENOMEM);
             goto fail;
         }
@@ -175,6 +178,7 @@ int ff_h264_replace_picture(H264Context *h, H264Picture *dst, const H264Picture 
     for (i = 0; i < 2; i++) {
         ret  = av_buffer_replace(&dst->motion_val_buf[i], src->motion_val_buf[i]);
         ret |= av_buffer_replace(&dst->ref_index_buf[i], src->ref_index_buf[i]);
+        ret |= av_buffer_replace(&dst->ref_pocs_buf[i], src->ref_pocs_buf[i]);
         if (ret < 0)
             goto fail;
     }

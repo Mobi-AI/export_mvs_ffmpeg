@@ -719,6 +719,11 @@ typedef struct AVFrame {
      * Duration of the frame, in the same units as pts. 0 if unknown.
      */
     int64_t duration;
+
+    /**
+     * Picture order count passed from H264 decoder.
+     */
+    int h264_poc;
 } AVFrame;
 
 

@@ -175,13 +175,15 @@ static int init_table_pools(H264Context *h)
     h->motion_val_pool   = av_buffer_pool_init(2 * (b4_array_size + 4) *
                                                sizeof(int16_t), av_buffer_allocz);
     h->ref_index_pool    = av_buffer_pool_init(4 * mb_array_size, av_buffer_allocz);
+    h->ref_pocs_pool     = av_buffer_pool_init(16 * mb_array_size, av_buffer_allocz);
 
     if (!h->qscale_table_pool || !h->mb_type_pool || !h->motion_val_pool ||
-        !h->ref_index_pool) {
+        !h->ref_index_pool || !h->ref_pocs_pool) {
         av_buffer_pool_uninit(&h->qscale_table_pool);
         av_buffer_pool_uninit(&h->mb_type_pool);
         av_buffer_pool_uninit(&h->motion_val_pool);
         av_buffer_pool_uninit(&h->ref_index_pool);
+        av_buffer_pool_uninit(&h->ref_pocs_pool);
         return AVERROR(ENOMEM);
     }
 
@@ -249,11 +251,13 @@ static int alloc_picture(H264Context *h, H264Picture *pic)
     for (i = 0; i < 2; i++) {
         pic->motion_val_buf[i] = av_buffer_pool_get(h->motion_val_pool);
         pic->ref_index_buf[i]  = av_buffer_pool_get(h->ref_index_pool);
-        if (!pic->motion_val_buf[i] || !pic->ref_index_buf[i])
+        pic->ref_pocs_buf[i]   = av_buffer_pool_get(h->ref_pocs_pool);
+        if (!pic->motion_val_buf[i] || !pic->ref_index_buf[i] || !pic->ref_pocs_buf[i])
             goto fail;
 
         pic->motion_val[i] = (int16_t (*)[2])pic->motion_val_buf[i]->data + 4;
         pic->ref_index[i]  = pic->ref_index_buf[i]->data;
+        pic->ref_pocs[i] = pic->ref_pocs_buf[i]->data;
     }
 
     pic->pps_buf = av_buffer_ref(h->ps.pps_ref);
@@ -1488,7 +1492,7 @@ static int h264_select_output_frame(H264Context *h)
     out     = h->delayed_pic[0];
     out_idx = 0;
     for (i = 1; h->delayed_pic[i] &&
-                !h->delayed_pic[i]->f->key_frame &&
+                !h->delayed_pic[i]->f->key_frame && 
                 !h->delayed_pic[i]->mmco_reset;
          i++)
         if (h->delayed_pic[i]->poc < out->poc) {

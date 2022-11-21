@@ -62,6 +62,9 @@ typedef struct Picture {
     AVBufferRef *ref_index_buf[2];
     int8_t *ref_index[2];
 
+    AVBufferRef *ref_pocs_buf[2];
+    int *ref_pocs[2];
+
     int alloc_mb_width;         ///< mb_width used to allocate tables
     int alloc_mb_height;        ///< mb_height used to allocate tables
     int alloc_mb_stride;        ///< mb_stride used to allocate tables
