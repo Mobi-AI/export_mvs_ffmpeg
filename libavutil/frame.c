@@ -363,6 +363,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
     av_assert1(dst->ch_layout.nb_channels == 0 &&
                dst->ch_layout.order == AV_CHANNEL_ORDER_UNSPEC);
 
+    dst->h264_poc       = src->h264_poc;
     dst->format         = src->format;
     dst->width          = src->width;
     dst->height         = src->height;
@@ -556,6 +557,7 @@ int av_frame_make_writable(AVFrame *frame)
         return 0;
 
     memset(&tmp, 0, sizeof(tmp));
+    tmp.h264_poc       = frame->h264_poc;
     tmp.format         = frame->format;
     tmp.width          = frame->width;
     tmp.height         = frame->height;
@@ -774,8 +776,10 @@ int av_frame_copy(AVFrame *dst, const AVFrame *src)
         return AVERROR(EINVAL);
 
 FF_DISABLE_DEPRECATION_WARNINGS
-    if (dst->width > 0 && dst->height > 0)
+    if (dst->width > 0 && dst->height > 0) {
+        dst->h264_poc = src->h264_poc;
         return frame_copy_video(dst, src);
+    }
     else if (dst->nb_samples > 0 &&
              (av_channel_layout_check(&dst->ch_layout)
 #if FF_API_OLD_CHANNEL_LAYOUT

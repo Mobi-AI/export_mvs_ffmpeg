@@ -47,6 +47,13 @@
 #define FRAME_TYPE_P (1<<1)
 #define FRAME_TYPE_B (1<<2)
 
+#define DEBUG_FFMPEG_EXPORT_REFS
+#ifdef DEBUG_FFMPEG_EXPORT_REFS
+#include "libswscale/swscale.h"
+#include "libswscale/swscale_internal.h"
+#include "stdio.h"
+#endif
+
 typedef struct CodecViewContext {
     const AVClass *class;
     unsigned mv;
@@ -227,6 +234,22 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *frame)
     CodecViewContext *s = ctx->priv;
     AVFilterLink *outlink = ctx->outputs[0];
 
+    // Debug code
+    #ifdef DEBUG_FFMPEG_EXPORT_REFS
+    SwsContext* swsContext = sws_getContext(frame->width, frame->height, 
+    AV_PIX_FMT_YUV420P,frame->width, frame->height, AV_PIX_FMT_BGR24, NULL, NULL, NULL, NULL);
+    const uint8_t *srcdata = frame->data;
+    const uint8_t *srclinesize = frame->linesize;
+    const int linesize[8] = {frame->linesize[0] * 3};
+    int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_BGR24, frame->width, frame->height, 1);
+    uint8_t* p_global_bgr_buffer = (uint8_t*) malloc(num_bytes * sizeof(uint8_t));
+    uint8_t* const bgr_buffer[8] = {p_global_bgr_buffer}; 
+    sws_scale(swsContext, srcdata, srclinesize, 0, frame->height, bgr_buffer, linesize);
+    char mvFn[16] = "exported\0\0\0\0\0\0\0\0";
+    sprintf(mvFn+8, "%d", frame->h264_poc);
+    FILE* file = fopen(mvFn, "w");
+    #endif
+
     if (s->qp) {
         enum AVVideoEncParamsType qp_type;
         int qstride, ret;
@@ -311,9 +334,49 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *frame)
                         draw_arrow(frame->data[0], mv->dst_x, mv->dst_y, mv->src_x, mv->src_y,
                                    frame->width, frame->height, frame->linesize[0],
                                    100, 0, direction);
+                #ifdef DEBUG_FFMPEG_EXPORT_REFS
+                if (i % 10000 ==0) { // we only sample some areas for fast test
+                    char data[30] = {0};
+
+                    fputs("\n[ref frame] poc = ", file);
+                    sprintf(data, "%d", index->poc);
+                    fputs(data, file);
+                    data[0]=0;
+
+                    fputs(" x = ", file);
+                    sprintf(data, "%d", mv->src_x);
+                    fputs(data, file);
+                    data[0]=0;
+
+                    fputs(" y = ", file);
+                    sprintf(data, "%d", mv->src_y);
+                    fputs(data, file);
+                    data[0]=0;
+
+                    fputs("[cur frame] poc = ", file);
+                    sprintf(data, "%d", frame->h264_poc);
+                    fputs(data, file);
+                    data[0]=0;
+
+                    fputs(" x = ", file);
+                    sprintf(data, "%d", mv->dst_x);
+                    fputs(data, file);
+                    data[0]=0;
+
+                    fputs("y = ", file);
+                    sprintf(data, "%d", mv->dst_y);
+                    fputs(data, file);
+                    data[0]=0;
+                }
+                #endif
             }
         }
     }
+
+    #ifdef DEBUG_FFMPEG_EXPORT_REFS
+    fclose(file);
+    free(p_global_bgr_buffer); 
+    #endif
 
     return ff_filter_frame(outlink, frame);
 }

@@ -169,7 +169,7 @@ void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
                           int mb_width, int mb_height, int mb_stride, int quarter_sample, int h264_poc)
 {
     pict->h264_poc = h264_poc;
-    if ((avctx->export_side_data & AV_CODEC_EXPORT_DATA_MVS) && mbtype_table && motion_val[0]) {
+    if (avctx->codec_id == AV_CODEC_ID_H264 && mbtype_table && motion_val[0] && ref_index[0] && ref_pocs[0]) {
         const int shift = 1 + quarter_sample;
         const int scale = 1 << shift;
         const int mv_sample_log2 = avctx->codec_id == AV_CODEC_ID_H264 || avctx->codec_id == AV_CODEC_ID_SVQ3 ? 2 : 1;
