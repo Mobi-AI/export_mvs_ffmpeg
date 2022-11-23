@@ -206,7 +206,7 @@ void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
                                 int xy = 4 * (mb_x + mb_y * mb_width) + i;
                                 uint8_t index = ref_index[direction][xy];
                                 int frame_num = ref_pocs[direction][xy];
-                                add_mb_ref(indices+mbcount, index, frame_num);
+                                add_mb_ref(indices+mbcount-1, index, frame_num);
                             }
                         }
                     } else if (IS_16X8(mb_type)) {
@@ -226,7 +226,7 @@ void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
                                 int xy = 4 * (mb_x + mb_y * mb_width) + i==0?0:3;
                                 uint8_t index = ref_index[direction][xy];
                                 int frame_num = ref_pocs[direction][xy];
-                                add_mb_ref(indices+mbcount, index, frame_num);
+                                add_mb_ref(indices+mbcount-1, index, frame_num);
                             }
                         }
                     } else if (IS_8X16(mb_type)) {
@@ -246,7 +246,7 @@ void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
                                 int xy = 4 * (mb_x + mb_y * mb_width) + i==0?0:3;
                                 uint8_t index = ref_index[direction][xy];
                                 int frame_num = ref_pocs[direction][xy];
-                                add_mb_ref(indices+mbcount, index, frame_num);
+                                add_mb_ref(indices+mbcount-1, index, frame_num);
                             }
                         }
                     } else {
@@ -260,7 +260,7 @@ void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict,
                             int xy = 4 * (mb_x + mb_y * mb_width);
                             uint8_t index = ref_index[direction][xy];
                             int frame_num = ref_pocs[direction][xy];
-                            add_mb_ref(indices+mbcount, index, frame_num);
+                            add_mb_ref(indices+mbcount-1, index, frame_num);
                           }
                     }
                 }
