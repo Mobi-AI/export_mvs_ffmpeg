@@ -4,6 +4,10 @@ FFmpeg README
 FFmpeg is a collection of libraries and tools to process multimedia content
 such as audio, video, subtitles and related metadata.
 
+## Export motion vectors and reference pocs:
+ffmpeg -i [input_video] -vsync 0 -vf codecview=mv=pf+bf+bb -f image2 %08d.jpg
+python main.py
+
 ## Libraries
 
 * `libavcodec` provides implementation of a wider range of codecs.

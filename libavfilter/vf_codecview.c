@@ -248,7 +248,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *frame)
     sprintf(mvFn+8, "%d", frame->h264_poc);
     FILE* file = fopen(mvFn, "w");
     char pixel[10] = {0};
-    for (int i = 0; i < frame->height; i ++) {
+    /*for (int i = 0; i < frame->height; i ++) {
         for (int j = 0; j < frame->width; j ++) {
             for (int k = 0; k < 3; k ++){
                 sprintf(pixel, "%d,", p_global_bgr_buffer[3*(i*frame->width+j)+k]);
@@ -259,7 +259,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *frame)
         sprintf(pixel, "\n");
         fputs(pixel, file);
         pixel[0] = 0;
-    }
+    }*/
     #endif
 
     if (s->qp) {
@@ -347,7 +347,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *frame)
                                    frame->width, frame->height, frame->linesize[0],
                                    100, 0, direction);
                 #ifdef DEBUG_FFMPEG_EXPORT_REFS
-                if (i < 100) { // we only sample some areas for fast test
+                if (i < 3000) { // we only sample some areas for fast test
                     char data[300] = {0};
                     sprintf(data, "[block size] w = %d  h = %d [ref frame] poc = %d x = %d y = %d [cur frame] poc = %d x = %d y = %d\n",
                      mv->w, mv->h, index->poc, mv->src_x, mv->src_y, frame->h264_poc, mv->dst_x, mv->dst_y);
