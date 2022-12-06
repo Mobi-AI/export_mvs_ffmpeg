@@ -62,6 +62,7 @@ typedef struct CodecViewContext {
     int hsub, vsub;
     int qp;
     int block;
+    int frameIdx; // the index of the incoming frame (starting from 0)
 } CodecViewContext;
 
 #define OFFSET(x) offsetof(CodecViewContext, x)
@@ -244,8 +245,8 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *frame)
     uint8_t* p_global_bgr_buffer = (uint8_t*) malloc(num_bytes * sizeof(uint8_t));
     uint8_t* const bgr_buffer[8] = {p_global_bgr_buffer}; 
     sws_scale(swsContext, srcdata, srclinesize, 0, frame->height, bgr_buffer, linesize);
-    char mvFn[16] = "exported\0\0\0\0\0\0\0\0";
-    sprintf(mvFn+8, "%d", frame->h264_poc);
+    char mvFn[30] = {0};
+    sprintf(mvFn, "exported%d.txt", s->frameIdx ++);
     FILE* file = fopen(mvFn, "w");
     char pixel[10] = {0};
     /*for (int i = 0; i < frame->height; i ++) {
@@ -347,14 +348,10 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *frame)
                                    frame->width, frame->height, frame->linesize[0],
                                    100, 0, direction);
                 #ifdef DEBUG_FFMPEG_EXPORT_REFS
-                if (i < 3000) { // we only sample some areas for fast test
-                    char data[300] = {0};
-                    sprintf(data, "[block size] w = %d  h = %d [ref frame] poc = %d x = %d y = %d [cur frame] poc = %d x = %d y = %d\n",
-                     mv->w, mv->h, index->poc, mv->src_x, mv->src_y, frame->h264_poc, mv->dst_x, mv->dst_y);
-                    fputs(data, file);
-
-
-                }
+                char data[300] = {0};
+                sprintf(data, "[block size] w = %d  h = %d [ref frame] poc = %d x = %d y = %d [cur frame] poc = %d x = %d y = %d\n",
+                 mv->w, mv->h, index->poc, mv->src_x, mv->src_y, frame->h264_poc, mv->dst_x, mv->dst_y);
+                fputs(data, file);
                 #endif
             }
         }
@@ -377,6 +374,7 @@ static int config_input(AVFilterLink *inlink)
 
     s->hsub = desc->log2_chroma_w;
     s->vsub = desc->log2_chroma_h;
+    s->frameIdx = 0;
     return 0;
 }
 

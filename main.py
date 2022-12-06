@@ -1,17 +1,29 @@
 from PIL import Image
 import numpy as np
 import re
+import argparse
+import os
 
-img_index = 24
-print_ranges=[100*i for i in range(20)]
+parser = argparse.ArgumentParser()
+parser.add_argument("--video_idx", type = int)
+parser.add_argument("--dir", type = str, default="./video")
+args = parser.parse_args()
 
-cur_img = np.array(Image.open("./video/"+"0"*(8-len(str(img_index+1)))+str(img_index+1)+".jpg"))
-cur_file = open("./video/exported{}".format(img_index*2), "r")
-lines = cur_file.readlines()
+video_idx = str(args.video_idx)
+video_idx = "0"*(3-len(video_idx))+str(video_idx)
 
-for i, line in enumerate(lines):
-	if i in ranges:
-		pattern = "\[block size\] w = (\d+)  h = (\d+) \[ref frame\] poc = (\d+) x = (\d+) y = (\d+) \[cur frame\] poc = (\d+) x = (\d+) y = (\d+)"
+width = 320
+height = 168
+nframes = 100
+
+motion = np.zeros((nframes, height, width, 2))
+
+
+for frame_idx in range(nframes):
+	cur_file = open(os.path.join(args.dir, os.path.join(video_idx, "exported{}.txt".format(frame_idx))), "r")
+	lines = cur_file.readlines()
+	for line in lines:
+		pattern = "\[block size\] w = (\d+)  h = (\d+) \[ref frame\] poc = (\d+) x = (-*\d+) y = (-*\d+) \[cur frame\] poc = (\d+) x = (-*\d+) y = (-*\d+)"
 		matches = re.match(pattern, line.strip())
 		w       = int(matches.group(1))
 		h       = int(matches.group(2))
@@ -21,8 +33,10 @@ for i, line in enumerate(lines):
 		cur_poc = int(matches.group(6))
 		cur_x   = int(matches.group(7))
 		cur_y   = int(matches.group(8))
-		cur_patch = cur_img[cur_y-h//2:cur_y+h//2, cur_x-w//2:cur_x+w//2, :]
-		ref_patch = np.array(Image.open("./video/"+"0"*(8-len(str(ref_poc//2+1)))+str(ref_poc//2+1)+".jpg"))[ref_y-h//2:ref_y+h//2, ref_x-w//2:ref_x+w//2, :]
-		Image.fromarray(cur_patch).show()
-		Image.fromarray(ref_patch).show()
-		input("Print any key to go on\n")
+		assert ref_poc < cur_poc
+		motion[frame_idx, cur_y - h//2 : cur_y + h//2, cur_x - w//2 : cur_x + w//2, 0] = (cur_x - ref_x) * 2 / (cur_poc - ref_poc)
+		motion[frame_idx, cur_y - h//2 : cur_y + h//2, cur_x - w//2 : cur_x + w//2, 1] = (cur_y - ref_y) * 2 / (cur_poc - ref_poc)
+		
+np.save(os.path.join(args.dir, os.path.join(video_idx, "motion.npy")), motion)
+		
+		

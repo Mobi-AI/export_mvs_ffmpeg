@@ -316,6 +316,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
     dst->colorspace             = src->colorspace;
     dst->color_range            = src->color_range;
     dst->chroma_location        = src->chroma_location;
+    dst->h264_poc               = src->h264_poc;
 
     av_dict_copy(&dst->metadata, src->metadata, 0);
 
