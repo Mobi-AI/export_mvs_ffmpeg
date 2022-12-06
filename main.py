@@ -20,10 +20,13 @@ nframes = 100
 
 motion = np.zeros((nframes, height, width, 2))
 
-
+error = False
 for frame_idx in range(nframes):
+	if error:
+		break
 	cur_file = open(os.path.join(args.dir, os.path.join(video_idx, "exported{}.txt".format(frame_idx))), "r")
 	lines = cur_file.readlines()
+	first_line = True
 	for line in lines:
 		pattern = "\[block size\] w = (\d+)  h = (\d+) \[ref frame\] poc = (\d+) x = (-*\d+) y = (-*\d+) \[cur frame\] poc = (\d+) x = (-*\d+) y = (-*\d+)"
 		matches = re.match(pattern, line.strip())
@@ -35,10 +38,15 @@ for frame_idx in range(nframes):
 		cur_poc = int(matches.group(6))
 		cur_x   = int(matches.group(7))
 		cur_y   = int(matches.group(8))
-		assert ref_poc < cur_poc
+		if first_line:
+			cur_poc_first = cur_poc
+			first_line = False
+		if ref_poc >= cur_poc or cur_poc_first != cur_poc:
+			print("Error with video {}".format(video_idx))
+			motion[:] = 0
+			error = True
+			break
 		motion[frame_idx, max(0, cur_y - h//2) : min(cur_y + h//2, height), max(0, cur_x - w//2) : min(cur_x + w//2, width), 0] = (cur_x - ref_x) * 2 / (cur_poc - ref_poc)
 		motion[frame_idx, max(0, cur_y - h//2) : min(cur_y + h//2, height), max(0, cur_x - w//2) : min(cur_x + w//2, width), 1] = (cur_y - ref_y) * 2 / (cur_poc - ref_poc)
 		
 np.save(os.path.join(args.dir, os.path.join(video_idx, "motion.npy")), motion)
-		
-		
