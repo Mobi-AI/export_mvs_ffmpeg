@@ -4,7 +4,11 @@ FFmpeg README
 FFmpeg is a collection of libraries and tools to process multimedia content
 such as audio, video, subtitles and related metadata.
 
-## Export motion vectors and reference pocs:
+## Compilation
+PATH="$HOME/bin:$PATH" PKG_CONFIG_PATH="$HOME/ffmpeg_build/lib/pkgconfig" ./configure   --prefix="$HOME/ffmpeg_build"   --pkg-config-flags="--static"   --extra-cflags="-I$HOME/ffmpeg_build/include"   --extra-ldflags="-L$HOME/ffmpeg_build/lib"   --extra-libs="-lpthread -lm -lgsl -lgslcblas"   --ld="g++"   --bindir="$HOME/bin"   --enable-gpl   --enable-libx264   --enable-sdl2   --enable-debug   --disable-asm   --disable-optimizations   --enable-libxcb  --enable-libvpx
+PATH="$HOME/bin:$PATH" make -j4 && make install
+
+## Export motion vectors and reference pocs
 ffmpeg -i [input_video] -vsync 0 -vf codecview=mv=pf+bf+bb -f image2 %08d.jpg
 
 python main.py
